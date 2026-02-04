@@ -1,2 +1,6 @@
 # không push thư mục node_modules
 node_modules/
+# che env
+.env
+# Security keys
+src/config/serviceAccountKey.json

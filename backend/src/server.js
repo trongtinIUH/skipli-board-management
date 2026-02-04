@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./config/firebase');
 
 const express = require('express');
 const http = require('http');
