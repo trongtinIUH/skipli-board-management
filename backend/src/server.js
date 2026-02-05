@@ -22,6 +22,7 @@ app.use('/api/auth', authRoutes);
 
 
 
+
 //2 khởi tạo server HTTP dùng socket.io
 const server = http.createServer(app);
 
