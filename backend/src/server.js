@@ -6,6 +6,7 @@ const http = require('http');
 const {Server} = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,6 +14,12 @@ const PORT = process.env.PORT || 5000;
 //1 cấu hình middleware
 app.use(cors());
 app.use(express.json());
+
+//-- cấu hình routes api--
+//signup route
+app.use('/api/auth', authRoutes);
+
+
 
 
 //2 khởi tạo server HTTP dùng socket.io
