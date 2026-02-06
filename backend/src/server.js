@@ -7,6 +7,7 @@ const {Server} = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const authRoutes = require('./routes/authRoutes');
+const boardRoutes = require('./routes/boardRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +19,7 @@ app.use(express.json());
 //-- cấu hình routes api--
 //signup route
 app.use('/api/auth', authRoutes);
+app.use('/api/boards', boardRoutes);
 
 
 
