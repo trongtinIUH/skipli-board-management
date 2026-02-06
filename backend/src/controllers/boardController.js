@@ -1,17 +1,18 @@
 const {db} = require('../config/firebase');
 const {v4: uuidv4} = require('uuid');
 
-//hàm tạo bảng mới
+//1 hàm tạo bảng mới
 const createBoard = async (req, res) => {
     try{
-        const { name } = req.body;
+        const { name, description } = req.body;
         const userId = req.user.uid; 
 
         if(!name ) return res.status(400).json({ error: 'Board name is required.' });
 
         const newBoard = {
             id: uuidv4(),
-            name,
+            name: name,
+            description: description || '',
             ownerId: userId,
             memberIds: [userId],
             createdAt: new Date().toISOString(),
@@ -24,7 +25,7 @@ const createBoard = async (req, res) => {
     }
 };
 
-//hàm lấy danh sách bảng
+//2 hàm lấy danh sách bảng
 const getBoards = async (req, res) => {
     try{
         const userId = req.user.uid;
@@ -37,6 +38,77 @@ const getBoards = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch boards.' });
     }
 };
+//3 lấy chi tiết bảng
+const getBoardById = async (req, res) => {
+    try{
+        const {id} = req.params;
+        const userId = req.user.uid;
+        const boardRef = db.collection('boards').doc(id);
+        const doc = await  boardRef.get();
+        
+        if(!doc.exists){return res.status(404).json({error: 'Board not found' })}
+
+        const boardData = doc.data();
+        if(!boardData.memberIds.includes(userId)){
+            return res.status(403).json({ error: 'Access denied to this board.' });
+        }
+        res.status(200).json(boardData);
+    }catch (error) {
+       res.status(500).json({ error: error.message });
+    }
+};
+
+//4 cập nhật bảng 
+const updateBoard = async (req, res) => {
+    try{
+        const {id} = req.params;
+        const {name , description} = req.body;
+        const userId = req.user.uid;
+
+        const boardRef = db.collection('boards').doc(id);
+        const doc = await boardRef.get();   
+
+        if(!doc.exists){return res.status(404).json({ error: 'Board not found.' });}
+
+        if(doc.data().ownerId !== userId){
+            return res.status(403).json({ error: 'Unauthorized: Only owner can update.' });
+        }
+
+        await boardRef.update({ 
+            name: name || doc.data().name, 
+            description: description || doc.data().description });
+
+        //get lại data mới
+        const updatedDoc = await boardRef.get();
+        const updatedBoard = updatedDoc.data();
+        res.status(200).json(updatedBoard);
+    }catch (error) {
+         res.status(500).json({ error: error.message });
+    }
+};
+
+//5 xóa bảng 
+const deleteBoard = async (req, res) => {
+    try{
+        const {id} = req.params;
+        const userId = req.user.uid;
+
+        const boardRef = db.collection('boards').doc(id); 
+        const doc = await boardRef.get();
+
+        if(!doc.exists){return res.status(404).json({ error: 'Board not found.' });}
+
+        if(doc.data().ownerId !== userId){
+            return res.status(403).json({ error: 'Unauthorized: Only owner can delete.' });
+        }
+
+        await boardRef.delete();
+        res.status(204).send();        
+    }catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
 
 
-module.exports = { createBoard, getBoards };
+
+module.exports = { createBoard, getBoards, getBoardById, updateBoard, deleteBoard };
