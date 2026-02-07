@@ -25,7 +25,7 @@ export const verifyOTP = async (email, otp) => {
         //lưu token vào localstorage
         if(response.data.token){
             localStorage.setItem('token', response.data.token);
-            localStorage.setItem('MyUser', JSON.stringify(response.data));
+            localStorage.setItem('MyUser', JSON.stringify(response.data.user));
         }
         return response.data;
     }catch(error){
@@ -37,3 +37,20 @@ export const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('MyUser');
 };
+
+export const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return { 
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+
+    } 
+  };
+};
+
+export const isTokenValid = () => {
+  const token = localStorage.getItem('token');
+  return token ? true : false;
+};
+
