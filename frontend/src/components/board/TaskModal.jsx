@@ -3,18 +3,21 @@ import React, { useState, useEffect } from 'react';
 const TaskModal = ({ task, onClose, onUpdate, onDelete }) => {
   const [taskTitle, setTaskTitle] = useState(task.title);
   const [taskDesc, setTaskDesc] = useState(task.description || '');
+  const [githubUrl, setGithubUrl] = useState(task.githubPr || '');
 
   // sync với task mới khi chuyển đổi
   useEffect(() => {
     setTaskTitle(task.title);
     setTaskDesc(task.description || '');
+    setGithubUrl(task.githubPr || '');
   }, [task]);
 
   const saveTask = () => {
     onUpdate({
       ...task,
       title: taskTitle,
-      description: taskDesc
+      description: taskDesc,
+      githubPr: githubUrl
     });
     onClose();
   };
@@ -54,12 +57,13 @@ const TaskModal = ({ task, onClose, onUpdate, onDelete }) => {
         </div>
 
         {/* Content */}
-        <div className="p-6 bg-gray-50" style={{minHeight: '400px'}}>
+        <div className="p-6 bg-gray-50 overflow-y-auto" style={{maxHeight: '70vh'}}>
           <div className="flex gap-6">
             
-            {/* Left side - Description */}
+            {/* Left side - Description & GitHub */}
             <div className="flex-1">
-              <div className="mb-4">
+              {/* Description */}
+              <div className="mb-5">
                 <div className="flex items-center mb-3">
                    <div className="w-5 h-5 mr-2">
                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-500">
@@ -72,10 +76,47 @@ const TaskModal = ({ task, onClose, onUpdate, onDelete }) => {
                   placeholder="Thêm mô tả chi tiết hơn..."
                   value={taskDesc}
                   onChange={e => setTaskDesc(e.target.value)}
-                  rows={8}
+                  rows={5}
                   className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-white"
                   style={{fontFamily: 'inherit'}}
                 />
+              </div>
+
+              {/* GitHub Integration */}
+              <div className="mb-4">
+                <div className="flex items-center mb-3">
+                  <span className="text-xl mr-2">🐱</span>
+                  <h3 className="font-semibold text-gray-700 text-lg">GitHub Integration</h3>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <label className="block text-sm text-gray-600 mb-2">
+                    Link Pull Request / Issue
+                  </label>
+                  <input 
+                    type="url"
+                    placeholder="https://github.com/user/repo/pull/123"
+                    value={githubUrl}
+                    onChange={e => setGithubUrl(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm"
+                  />
+                  {githubUrl && (
+                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      <span className="text-sm text-green-700">Đã link GitHub</span>
+                      <a 
+                        href={githubUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 text-sm underline ml-auto"
+                      >
+                        Xem →
+                      </a>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 mt-2">
+                    Paste link GitHub PR hoặc Issue để liên kết với task này
+                  </p>
+                </div>
               </div>
             </div>
 

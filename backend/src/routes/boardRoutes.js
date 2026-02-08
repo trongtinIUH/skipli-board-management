@@ -11,4 +11,7 @@ router.get('/:id', boardController.getBoardById);
 router.put('/:id', boardController.updateBoard);
 router.delete('/:id', boardController.deleteBoard);
 
+//thêm user vào board
+router.post('/:id/invite', boardController.inviteUserToBoard);
+
 module.exports = router;

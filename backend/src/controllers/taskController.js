@@ -80,7 +80,7 @@ exports.updateTask = async (req, res) => {
 exports.updateTask = async (req, res) => {
   try{
     const {taskId} = req.params;
-    const {title, description, cardId} = req.body;
+    const {title, description, cardId, githubPr} = req.body;
 
     const taskRef = db.collection('tasks').doc(taskId);
     const doc = await taskRef.get();
@@ -93,6 +93,7 @@ exports.updateTask = async (req, res) => {
     if(title) update.title = title;
     if(description !== undefined) update.description = description;
     if(cardId) update.cardId = cardId;
+    if(githubPr !== undefined) update.githubPr = githubPr;
 
     await taskRef.update(update);
     const updatedDoc = await taskRef.get();
@@ -119,4 +120,95 @@ exports.deleteTask = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 
+};
+
+//6. assign member vào task
+exports.assignMemberToTask = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { memberId } = req.body;
+
+    const taskRef = db.collection('tasks').doc(taskId);
+    const taskDoc = await taskRef.get();
+
+    if (!taskDoc.exists) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const currentMembers = taskDoc.data().members || [];
+    
+    //kiểm tra đã assign chưa
+    if (currentMembers.includes(memberId)) {
+      return res.status(400).json({ error: 'Member already assigned to this task' });
+    }
+
+    await taskRef.update({
+      members: [...currentMembers, memberId]
+    });
+
+    res.status(201).json({ 
+      taskId: taskId,
+      memberId: memberId 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+//7. lấy danh sách members đã assign vào task
+exports.getAssignedMembers = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    const taskRef = db.collection('tasks').doc(taskId);
+    const taskDoc = await taskRef.get();
+
+    if (!taskDoc.exists) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const memberIds = taskDoc.data().members || [];
+    
+    //lấy thông tin chi tiết từng member
+    const members = [];
+    for (const memberId of memberIds) {
+      const userDoc = await db.collection('users').doc(memberId).get();
+      if (userDoc.exists) {
+        members.push({
+          taskId: taskId,
+          memberId: memberId,
+          email: userDoc.data().email
+        });
+      }
+    }
+
+    res.status(200).json(members);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+//8. xóa member khỏi task
+exports.removeMemberFromTask = async (req, res) => {
+  try {
+    const { taskId, memberId } = req.params;
+
+    const taskRef = db.collection('tasks').doc(taskId);
+    const taskDoc = await taskRef.get();
+
+    if (!taskDoc.exists) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const currentMembers = taskDoc.data().members || [];
+    const updatedMembers = currentMembers.filter(id => id !== memberId);
+
+    await taskRef.update({
+      members: updatedMembers
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };

@@ -88,7 +88,10 @@ const Dashboard = ()=>{
                         <span>Boards</span>
                     </div>
                     
-                    <div className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded cursor-pointer">
+                    <div 
+                        onClick={() => navigate('/users')}
+                        className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded cursor-pointer"
+                    >
                         <span>👥</span>
                         <span>All Members</span>
                     </div>

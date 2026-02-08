@@ -109,6 +109,57 @@ const deleteBoard = async (req, res) => {
     }
 };
 
+// mời thành viên vào 
+const inviteUserToBoard = async (req, res) => {
+    try {
+        const boardId = req.params.id;  
+        const { email } = req.body; 
+
+        // 1. Kiểm tra board tồn tại trước
+        const boardRef = db.collection('boards').doc(boardId);
+        const boardDoc = await boardRef.get();
+        
+        if (!boardDoc.exists) {
+            return res.status(404).json({ error: 'Board not found.' });
+        }
+
+        // 2. Tìm user bằng email
+        const userSnapshot = await db.collection('users').where('email', '==', email).get();
+        
+        if (userSnapshot.empty) {
+            return res.status(404).json({ error: 'User not found with this email.' });
+        }
+        
+        const userDoc = userSnapshot.docs[0];
+        const userToAdd = userDoc.data();
+        const userUid = userDoc.id; 
+
+        // 3. Kiểm tra user đã là member chưa
+        const currentMembers = boardDoc.data().memberIds || [];
+        
+        if (currentMembers.includes(userUid)) {
+            return res.status(400).json({ error: 'User is already a member of the board.' });
+        }
+
+        // 4. Thêm user vào board
+        await boardRef.update({
+            memberIds: [...currentMembers, userUid]
+        });
+        
+        res.status(200).json({ 
+            message: 'User added to board successfully', 
+            user: {
+                uid: userUid,
+                email: userToAdd.email,
+                displayName: userToAdd.displayName || userToAdd.email
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
 
-module.exports = { createBoard, getBoards, getBoardById, updateBoard, deleteBoard };
+
+module.exports = { createBoard, getBoards, getBoardById, updateBoard, deleteBoard, inviteUserToBoard };

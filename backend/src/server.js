@@ -9,6 +9,8 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const boardRoutes = require('./routes/boardRoutes');
 const listRoutes = require('./routes/listRoutes');
+const githubRoutes = require('./routes/githubRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,6 +28,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/boards/:boardId/cards', listRoutes);
+app.use('/api/github', githubRoutes);
+app.use('/api/users', userRoutes);
 
 
 

@@ -98,7 +98,8 @@ const BoardDetail = () => {
             // Gọi API Update
             await updateTask(id, updatedTask.cardId, updatedTask.id, {
                 title: updatedTask.title,
-                description: updatedTask.description
+                description: updatedTask.description,
+                githubPr: updatedTask.githubPr || ''
             });
 
             // Cập nhật State Local để giao diện tự đổi

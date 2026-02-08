@@ -55,3 +55,15 @@ export const getBoardById = async (boardId) => {
         throw error.response?.data?.error || "Lỗi tải chi tiết bảng";
     }
 };
+
+//6. thêm user vào board 
+export const inviteUserToBoard = async (boardId, email) => {
+    try{
+        const response = await axios.post(`${API_URL}/boards/${boardId}/invite`, 
+        { email }, 
+        getAuthHeader());
+        return response.data;
+    }catch (error) {
+       throw error.response?.data?.error || "Lỗi mời thành viên";
+    }
+};
