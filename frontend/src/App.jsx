@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'; // <--- Thêm Outlet vào đây
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import BoardDetail from './pages/BoardDetail';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -21,6 +22,8 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/board/:id" element={<BoardDetail />} />
+          
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />

@@ -1,8 +1,16 @@
 {
   "watch": ["src/"],
   "ext": "js,json",
-  "ignore": ["node_modules/", "*.test.js"],
-  "delay": "500",
-  "verbose": true,
-  "restartable": "rs"
+  "ignore": ["node_modules/", "*.test.js", "logs/"],
+  "delay": "1000",
+  "verbose": false,
+  "restartable": "rs",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "events": {
+    "start": "echo '🚀 Server is starting...'",
+    "restart": "echo '🔄 Server restarted due to changes'",
+    "crash": "echo '💥 Server crashed - waiting for changes'"
+  }
 }

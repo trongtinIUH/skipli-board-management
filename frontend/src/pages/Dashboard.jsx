@@ -62,6 +62,11 @@ const Dashboard = ()=>{
         }
     };
 
+    //xem chi tiết bảng
+    const handleDetailBoard = (boardId) => {
+        navigate(`/board/${boardId}`);
+    };
+
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -73,9 +78,7 @@ const Dashboard = ()=>{
             <div className="w-64 bg-gray-900 p-4">
                 {/* Logo */}
                 <div className="flex items-center gap-2 mb-8">
-                    <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white font-bold text-xl">
-                        S
-                    </div>
+                     <img src="/logo.png" alt="Board Logo"  className='w-10 h-auto'/>
                 </div>
 
                 {/* Nav Menu */}
@@ -121,7 +124,7 @@ const Dashboard = ()=>{
                     {boards.map((board) => (
                         <div 
                             key={board.id}
-                            onClick={() => navigate(`/board/${board.id}`)}
+                            onClick={() => handleDetailBoard(board.id)}
                             className="h-24 bg-white rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition relative group"
                         >
                             <h3 className="font-medium text-gray-900 truncate">{board.name}</h3>
@@ -138,7 +141,7 @@ const Dashboard = ()=>{
                         </div>
                     ))}
 
-                    {/* Create New Board Card */}
+                    {/* tạo card mới*/}
                     <div 
                         onClick={() => setShowCreateModal(true)}
                         className="h-24 bg-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-600 transition flex items-center justify-center border-2 border-dashed border-gray-600"
