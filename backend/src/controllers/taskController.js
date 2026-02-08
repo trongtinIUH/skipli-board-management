@@ -75,3 +75,48 @@ exports.updateTask = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+//4. update task 
+exports.updateTask = async (req, res) => {
+  try{
+    const {taskId} = req.params;
+    const {title, description, cardId} = req.body;
+
+    const taskRef = db.collection('tasks').doc(taskId);
+    const doc = await taskRef.get();
+
+    if(!doc.exists){
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const update ={};
+    if(title) update.title = title;
+    if(description !== undefined) update.description = description;
+    if(cardId) update.cardId = cardId;
+
+    await taskRef.update(update);
+    const updatedDoc = await taskRef.get();
+    res.status(200).json(updatedDoc.data());
+  }catch(error){
+    res.status(500).json({ error: error.message });
+  }
+};
+
+//5. xóa task
+exports.deleteTask = async (req, res) => {
+  try{
+    const {taskId} = req.params;
+    const taskRef = db.collection('tasks').doc(taskId);
+    const doc = await taskRef.get();
+
+    if(!doc.exists){
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    await taskRef.delete();
+    res.status(204).send()
+  }catch(error){
+    res.status(500).json({ error: error.message });
+  }
+
+};

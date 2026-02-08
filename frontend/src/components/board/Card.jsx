@@ -1,7 +1,7 @@
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 
-const Card = ({ card, index }) => {
+const Card = ({ card, index, onClick }) => {
   return (
     <Draggable draggableId={card.id} index={index}>
       {(provided, snapshot) => (
@@ -9,6 +9,7 @@ const Card = ({ card, index }) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          onClick={onClick}
           className={`bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:border-blue-400 group mb-3 transition-all ${
             snapshot.isDragging ? "shadow-lg ring-2 ring-blue-400 rotate-2" : ""
           }`}

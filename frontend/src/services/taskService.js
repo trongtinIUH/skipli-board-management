@@ -44,3 +44,12 @@ export const updateTask = async (boardId, cardId, taskId, data) => {
     throw error.response?.data?.error || "Lỗi cập nhật task";
   }
 };
+
+//xóa task
+export const deleteTask = async (boardId, cardId, taskId) => {
+  try{
+    const response = await axios.delete(`${API_URL}/boards/${boardId}/cards/${cardId}/tasks/${taskId}`, getAuthHeader());
+  }catch(error){
+    throw error.response?.data?.error || "Lỗi xóa task";
+  }
+};

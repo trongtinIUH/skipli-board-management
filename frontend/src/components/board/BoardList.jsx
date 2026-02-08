@@ -4,7 +4,7 @@ import Card from './Card';
 import { fetchTasks, createTask } from '../../services/taskService';
 import { toast } from 'react-toastify';
 
-const BoardList = ({ boardId, list }) => {
+const BoardList = ({ boardId, list, onTaskClick }) => {
   const [tasks, setTasks] = useState([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -57,7 +57,7 @@ const BoardList = ({ boardId, list }) => {
               style={{ maxHeight: 'calc(100vh - 220px)' }}
             >
               {tasks.map((task, index) => (
-                <Card key={task.id} card={task} index={index} />
+                <Card key={task.id} card={task} index={index} onClick={() => onTaskClick(task)} />
               ))}
               {provided.placeholder}
             </div>

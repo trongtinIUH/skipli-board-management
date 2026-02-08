@@ -7,7 +7,8 @@ import BoardHeader from "../components/board/BoardHeader";
 import BoardList from "../components/board/BoardList";
 import { getBoardById } from "../services/boardService";
 import { fetchCards, createCard } from "../services/cardService";
-import { fetchTasks, updateTask } from "../services/taskService"; 
+import { fetchTasks, updateTask, deleteTask } from "../services/taskService"; 
+import TaskModal from "../components/board/TaskModal";
 
 const BoardDetail = () => {
     const { id } = useParams();
@@ -18,6 +19,7 @@ const BoardDetail = () => {
     const [loading, setLoading] = useState(true);
     const [newListName, setNewListName] = useState('');
     const [isAddingList, setIsAddingList] = useState(false);
+    const [selectedTask, setSelectedTask] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -84,8 +86,70 @@ const BoardDetail = () => {
             console.error("Lỗi gọi API:", error);
         }
        
-
     };
+
+            //hàm mở model task 
+        const handleTaskClick = (task) => {
+            setSelectedTask(task);
+        };
+        //hàm update task từ model 
+        const handleUpdateTaskContent = async (updatedTask) => {
+        try {
+            // Gọi API Update
+            await updateTask(id, updatedTask.cardId, updatedTask.id, {
+                title: updatedTask.title,
+                description: updatedTask.description
+            });
+
+            // Cập nhật State Local để giao diện tự đổi
+            const newLists = lists.map(list => {
+                if (list.id === updatedTask.cardId) {
+                    return {
+                        ...list,
+                        tasks: list.tasks.map(t => t.id === updatedTask.id ? updatedTask : t)
+                    };
+                }
+                return list;
+            });
+            setLists(newLists);
+            toast.success("Đã cập nhật task!");
+        } catch (error) {
+            toast.error("Lỗi cập nhật task");
+        }
+    };
+
+
+    //hàm delete task từ modal
+    const handleDeleteTask = async (taskId) => {
+        if (!selectedTask) return;
+        try {
+            // Gọi API Delete
+            await deleteTask(id, selectedTask.cardId, taskId);
+
+            // Cập nhật State Local (Xóa khỏi danh sách)
+            const newLists = lists.map(list => {
+                if (list.id === selectedTask.cardId) {
+                    return {
+                        ...list,
+                        tasks: list.tasks.filter(t => t.id !== taskId)
+                    };
+                }
+                return list;
+            });
+            setLists(newLists);
+            toast.success("Đã xóa task!");
+        } catch (error) {
+            toast.error("Lỗi xóa task");
+        }
+    };
+
+
+
+    // close model task
+    const closeTaskModal = () => {
+        setSelectedTask(null)
+    };
+
 
     const handleAddList = async () => {
         if (!newListName.trim()) return;
@@ -110,7 +174,7 @@ const BoardDetail = () => {
                 <div className="flex-1 overflow-x-auto p-6">
                     <div className="flex gap-6 h-full items-start">
                         {lists.map(list => (
-                            <BoardList key={list.id} boardId={id} list={list} />
+                            <BoardList key={list.id} boardId={id} list={list} onTaskClick={handleTaskClick} />
                         ))}
 
                         {/* Ô thêm cột mới */}
@@ -138,6 +202,15 @@ const BoardDetail = () => {
                     </div>
                 </div>
             </DragDropContext>
+            {/* Task Modal */}
+           {selectedTask && (
+            <TaskModal 
+                task= {selectedTask}
+                onClose={()=> setSelectedTask(null)}
+                onUpdate={handleUpdateTaskContent}
+                onDelete={handleDeleteTask}
+            />
+           )}
         </div>
     );
 };
