@@ -1,5 +1,5 @@
 // src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'; // <--- Thêm Outlet vào đây
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -7,9 +7,21 @@ import BoardDetail from './pages/BoardDetail';
 import Users from './pages/Users';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { connectSocket, disconnectSocket } from './services/socketService';
 
 const PrivateRoute = () => {
   const token = localStorage.getItem('token');
+
+  // kết nối socket khi user đã login
+  useEffect(() => {
+    if (token) {
+      connectSocket();
+    }
+    return () => {
+      // ko disconnect ở đây vì user vẫn đang dùng app
+    };
+  }, [token]);
+
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 

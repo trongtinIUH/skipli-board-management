@@ -46,13 +46,28 @@ const io = new Server(server, {
     }
 });
 
+// lưu io vào app để controller có thể dùng được
+app.set('io', io);
+
 //4 xử lý kết nối socket.io
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
 
-        socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
-});
+    // user join vào room của board khi mở board detail
+    socket.on('join-board', (boardId) => {
+        socket.join(`board:${boardId}`);
+        console.log(`Socket ${socket.id} joined room board:${boardId}`);
+    });
+
+    // user rời room khi thoát board
+    socket.on('leave-board', (boardId) => {
+        socket.leave(`board:${boardId}`);
+        console.log(`Socket ${socket.id} left room board:${boardId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`User disconnected: ${socket.id}`);
+    });
 });
 
 

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {fetchBoards, createBoard, deleteBoard} from "../services/boardService";
 import {logout} from "../services/authService";
+import { disconnectSocket } from "../services/socketService";
 
 const Dashboard = ()=>{
     const navigate = useNavigate();
@@ -68,6 +69,7 @@ const Dashboard = ()=>{
     };
 
     const handleLogout = () => {
+        disconnectSocket(); // ngắt socket khi logout
         logout();
         navigate('/login');
     };

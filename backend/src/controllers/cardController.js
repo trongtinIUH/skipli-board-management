@@ -1,5 +1,6 @@
 const {db} = require('../config/firebase');
 const { v4: uuidv4 } = require('uuid');
+const { emitToBoard } = require('../utils/socketHelper');
 
 
 //1. tạo cột mới trong chi tiết bảng
@@ -19,6 +20,9 @@ exports.createCard  = async (req, res) => {
     };
 
     await db.collection('cards').doc(newCard.id).set(newCard);
+
+    // emit socket event cho các user khác biết có cột mới
+    emitToBoard(req, boardId, 'card-created', newCard);
 
     res.status(201).json(newCard);
     }catch(error){

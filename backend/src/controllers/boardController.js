@@ -1,5 +1,6 @@
 const {db} = require('../config/firebase');
 const {v4: uuidv4} = require('uuid');
+const { emitToBoard } = require('../utils/socketHelper');
 
 //1 hàm tạo bảng mới
 const createBoard = async (req, res) => {
@@ -153,6 +154,12 @@ const inviteUserToBoard = async (req, res) => {
                 email: userToAdd.email,
                 displayName: userToAdd.displayName || userToAdd.email
             }
+        });
+
+        // emit socket event báo cho các user trong board biết có member mới
+        emitToBoard(req, boardId, 'member-invited', {
+            boardId: boardId,
+            user: { uid: userUid, email: userToAdd.email }
         });
 
     } catch (error) {

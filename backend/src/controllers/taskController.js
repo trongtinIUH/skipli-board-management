@@ -1,5 +1,6 @@
 const { db } = require('../config/firebase');
 const { v4: uuidv4 } = require('uuid');
+const { emitToBoard } = require('../utils/socketHelper');
 
 //1. tạo task mới 
 exports.createTask = async (req, res) => {
@@ -23,6 +24,10 @@ exports.createTask = async (req, res) => {
     };
 
     await db.collection('tasks').doc(newTask.id).set(newTask);
+
+    // emit socket event cho các user khác trong board
+    emitToBoard(req, boardId, 'task-created', newTask);
+
     res.status(201).json(newTask);
     }catch(error){
     res.status(500).json({ error: error.message });
@@ -47,36 +52,7 @@ exports.getTasksByCard = async (req, res) => {
     }
 };
 
-//3. lưu vị trí kéo thả 
-exports.updateTask = async (req, res) => {
-  try {
-    const { taskId } = req.params;
-    const { title, description, cardId } = req.body; 
-    const taskRef = db.collection('tasks').doc(taskId);
-    const doc = await taskRef.get();
-
-    if (!doc.exists) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-
-    // Tạo object chứa dữ liệu cần update
-    const updates = {};
-    if (title) updates.title = title;
-    if (description) updates.description = description;
-    if (cardId) updates.cardId = cardId; 
-
-    await taskRef.update(updates);
-
-    // Trả về task đã update
-    const updatedDoc = await taskRef.get();
-    res.status(200).json(updatedDoc.data());
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-//4. update task 
+//3. update task (kéo thả + sửa nội dung)
 exports.updateTask = async (req, res) => {
   try{
     const {taskId} = req.params;
@@ -97,7 +73,12 @@ exports.updateTask = async (req, res) => {
 
     await taskRef.update(update);
     const updatedDoc = await taskRef.get();
-    res.status(200).json(updatedDoc.data());
+
+    // emit socket event - thông báo task đã được update
+    const updatedData = updatedDoc.data();
+    emitToBoard(req, updatedData.boardId, 'task-updated', updatedData);
+
+    res.status(200).json(updatedData);
   }catch(error){
     res.status(500).json({ error: error.message });
   }
@@ -114,7 +95,15 @@ exports.deleteTask = async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    const taskData = doc.data();
     await taskRef.delete();
+
+    // emit socket event - thông báo task đã bị xóa
+    emitToBoard(req, taskData.boardId, 'task-deleted', { 
+      taskId: taskId, 
+      cardId: taskData.cardId 
+    });
+
     res.status(204).send()
   }catch(error){
     res.status(500).json({ error: error.message });

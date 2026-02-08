@@ -38,15 +38,24 @@ export const logout = () => {
     localStorage.removeItem('MyUser');
 };
 
+import { getSocketId } from './socketService';
+
 export const getAuthHeader = () => {
   const token = localStorage.getItem('token');
-  return { 
-    headers: { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-
-    } 
+  const socketId = getSocketId();
+  
+  const headers = { 
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
   };
+
+  // gửi kèm socket id để backend biết ai gửi request
+  // backend sẽ ko emit event lại cho người gửi
+  if (socketId) {
+    headers['x-socket-id'] = socketId;
+  }
+
+  return { headers };
 };
 
 export const isTokenValid = () => {

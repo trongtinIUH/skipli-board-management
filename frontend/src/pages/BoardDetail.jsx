@@ -9,6 +9,7 @@ import { getBoardById } from "../services/boardService";
 import { fetchCards, createCard } from "../services/cardService";
 import { fetchTasks, updateTask, deleteTask } from "../services/taskService"; 
 import TaskModal from "../components/board/TaskModal";
+import { connectSocket, joinBoard, leaveBoard, getSocket } from "../services/socketService";
 
 const BoardDetail = () => {
     const { id } = useParams();
@@ -23,6 +24,112 @@ const BoardDetail = () => {
 
     useEffect(() => {
         loadData();
+    }, [id]);
+
+    // kết nối socket và lắng nghe event realtime
+    useEffect(() => {
+        const socket = connectSocket();
+        
+        // join vào room của board hiện tại
+        joinBoard(id);
+
+        // lắng nghe khi có task mới được tạo từ user khác
+        socket.on('task-created', (newTask) => {
+            console.log('Socket: task-created', newTask);
+            setLists(prev => {
+                return prev.map(list => {
+                    if (list.id === newTask.cardId) {
+                        // kiểm tra task đã tồn tại chưa tránh duplicate
+                        const exists = list.tasks.find(t => t.id === newTask.id);
+                        if (exists) return list;
+                        return { ...list, tasks: [...list.tasks, newTask] };
+                    }
+                    return list;
+                });
+            });
+        });
+
+        // lắng nghe khi task được update (kéo thả, sửa nội dung...)
+        socket.on('task-updated', (updatedTask) => {
+            console.log('Socket: task-updated', updatedTask);
+            setLists(prev => {
+                let taskRemoved = false;
+                let newLists = prev.map(list => {
+                    // xóa task khỏi cột cũ nếu nó đã chuyển cột
+                    const filtered = list.tasks.filter(t => {
+                        if (t.id === updatedTask.id && list.id !== updatedTask.cardId) {
+                            taskRemoved = true;
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    // update task nếu nằm trong cột hiện tại
+                    const updated = filtered.map(t => 
+                        t.id === updatedTask.id ? updatedTask : t
+                    );
+
+                    return { ...list, tasks: updated };
+                });
+
+                // nếu task đã bị xóa khỏi cột cũ -> thêm vào cột mới
+                if (taskRemoved) {
+                    newLists = newLists.map(list => {
+                        if (list.id === updatedTask.cardId) {
+                            const exists = list.tasks.find(t => t.id === updatedTask.id);
+                            if (!exists) {
+                                return { ...list, tasks: [...list.tasks, updatedTask] };
+                            }
+                        }
+                        return list;
+                    });
+                }
+
+                return newLists;
+            });
+        });
+
+        // lắng nghe khi task bị xóa
+        socket.on('task-deleted', (data) => {
+            console.log('Socket: task-deleted', data);
+            setLists(prev => {
+                return prev.map(list => {
+                    if (list.id === data.cardId) {
+                        return {
+                            ...list,
+                            tasks: list.tasks.filter(t => t.id !== data.taskId)
+                        };
+                    }
+                    return list;
+                });
+            });
+        });
+
+        // lắng nghe khi có cột mới được tạo
+        socket.on('card-created', (newCard) => {
+            console.log('Socket: card-created', newCard);
+            setLists(prev => {
+                const exists = prev.find(l => l.id === newCard.id);
+                if (exists) return prev;
+                return [...prev, { ...newCard, tasks: [] }];
+            });
+        });
+
+        // lắng nghe khi có member mới được mời vào board
+        socket.on('member-invited', (data) => {
+            console.log('Socket: member-invited', data);
+            toast.info(`${data.user.email} đã được thêm vào board`);
+        });
+
+        // cleanup khi unmount hoặc đổi board
+        return () => {
+            leaveBoard(id);
+            socket.off('task-created');
+            socket.off('task-updated');
+            socket.off('task-deleted');
+            socket.off('card-created');
+            socket.off('member-invited');
+        };
     }, [id]);
 
     const loadData = async () => {
