@@ -2,6 +2,9 @@ import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 
 const Card = ({ card, index, onClick }) => {
+  //check có github links ko
+  const hasGithub = card.githubLinks && card.githubLinks.length > 0;
+  
   return (
     <Draggable draggableId={card.id} index={index}>
       {(provided, snapshot) => (
@@ -32,6 +35,21 @@ const Card = ({ card, index, onClick }) => {
 
           {/* Tên Task */}
           <p className="text-sm font-medium text-gray-800">{card.title}</p>
+          
+          {/* Badges row */}
+          <div className="flex items-center gap-2 mt-2">
+            {/* Description badge */}
+            {card.description && (
+              <span title="Có mô tả" className="text-gray-400 text-xs">≡</span>
+            )}
+            
+            {/* Github badge */}
+            {hasGithub && (
+              <span title={`${card.githubLinks.length} GitHub links`} className="text-xs flex items-center gap-1" style={{color: '#6b7280'}}>
+                🔗 {card.githubLinks.length}
+              </span>
+            )}
+          </div>
         </div>
       )}
     </Draggable>

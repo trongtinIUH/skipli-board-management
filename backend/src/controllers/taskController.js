@@ -80,7 +80,7 @@ exports.updateTask = async (req, res) => {
 exports.updateTask = async (req, res) => {
   try{
     const {taskId} = req.params;
-    const {title, description, cardId, githubPr} = req.body;
+    const {title, description, cardId, githubLinks} = req.body;
 
     const taskRef = db.collection('tasks').doc(taskId);
     const doc = await taskRef.get();
@@ -93,7 +93,7 @@ exports.updateTask = async (req, res) => {
     if(title) update.title = title;
     if(description !== undefined) update.description = description;
     if(cardId) update.cardId = cardId;
-    if(githubPr !== undefined) update.githubPr = githubPr;
+    if(githubLinks !== undefined) update.githubLinks = githubLinks;
 
     await taskRef.update(update);
     const updatedDoc = await taskRef.get();

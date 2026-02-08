@@ -3,31 +3,109 @@ import React, { useState, useEffect } from 'react';
 const TaskModal = ({ task, onClose, onUpdate, onDelete }) => {
   const [taskTitle, setTaskTitle] = useState(task.title);
   const [taskDesc, setTaskDesc] = useState(task.description || '');
-  const [githubUrl, setGithubUrl] = useState(task.githubPr || '');
+  const [newGhLink, setNewGhLink] = useState('');
+  const [ghLinks, setGhLinks] = useState(task.githubLinks || []);
 
-  // sync với task mới khi chuyển đổi
+  //sync state khi task thay đổi
   useEffect(() => {
     setTaskTitle(task.title);
     setTaskDesc(task.description || '');
-    setGithubUrl(task.githubPr || '');
+    setGhLinks(task.githubLinks || []);
   }, [task]);
 
-  const saveTask = () => {
+  //hàm parse link github ra type
+  function parseGhLink(url) {
+    if (!url || url.trim() === '') return null;
+    
+    let type = 'link';
+    let num = '';
+    
+    if (url.indexOf('/pull/') > -1) {
+      type = 'pr';
+      let parts = url.split('/pull/');
+      num = parts[1] ? parts[1].split('/')[0].split('?')[0] : '';
+    } else if (url.indexOf('/issues/') > -1) {
+      type = 'issue';
+      let parts = url.split('/issues/');
+      num = parts[1] ? parts[1].split('/')[0].split('?')[0] : '';
+    } else if (url.indexOf('/commit/') > -1) {
+      type = 'commit';
+      let parts = url.split('/commit/');
+      num = parts[1] ? parts[1].substring(0,7) : '';
+    }
+    
+    return { type, num, url };
+  }
+
+  //thêm github link mới
+  function addGithubLink() {
+    if (!newGhLink.trim()) {
+      alert('Nhập link GitHub đi!');
+      return;
+    }
+    
+    //check có phải link github ko
+    if (newGhLink.indexOf('github.com') === -1) {
+      alert('Link không phải GitHub!');
+      return;
+    }
+    
+    //check trùng
+    for (let i = 0; i < ghLinks.length; i++) {
+      if (ghLinks[i].url === newGhLink) {
+        alert('Link này đã có rồi!');
+        return;
+      }
+    }
+    
+    let parsed = parseGhLink(newGhLink);
+    if (parsed) {
+      setGhLinks([...ghLinks, parsed]);
+      setNewGhLink('');
+    }
+  }
+
+  //xóa 1 link
+  function removeLink(idx) {
+    let arr = [];
+    for (let i = 0; i < ghLinks.length; i++) {
+      if (i !== idx) arr.push(ghLinks[i]);
+    }
+    setGhLinks(arr);
+  }
+
+  //lưu task
+  function saveTask() {
+    if (!taskTitle.trim()) {
+      alert('Tiêu đề không được trống!');
+      return;
+    }
+    
     onUpdate({
       ...task,
       title: taskTitle,
       description: taskDesc,
-      githubPr: githubUrl
+      githubLinks: ghLinks
     });
     onClose();
-  };
+  }
 
-  const deleteTask = () => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa task này không?")) {
+  //xóa task
+  function deleteTask() {
+    let ok = window.confirm("Xóa task này?");
+    if (ok) {
       onDelete(task.id);
       onClose();
     }
-  };
+  }
+
+  //enter để thêm link
+  function handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addGithubLink();
+    }
+  }
 
   return (
     <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-60 flex items-center justify-center p-4" style={{zIndex: 999}}>
@@ -60,23 +138,19 @@ const TaskModal = ({ task, onClose, onUpdate, onDelete }) => {
         <div className="p-6 bg-gray-50 overflow-y-auto" style={{maxHeight: '70vh'}}>
           <div className="flex gap-6">
             
-            {/* Left side - Description & GitHub */}
+            {/* Left side */}
             <div className="flex-1">
               {/* Description */}
               <div className="mb-5">
                 <div className="flex items-center mb-3">
-                   <div className="w-5 h-5 mr-2">
-                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-500">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/>
-                     </svg>
-                   </div>
+                   <span className="mr-2 text-gray-500">≡</span>
                    <h3 className="font-semibold text-gray-700 text-lg">Mô tả</h3>
                 </div>
                 <textarea 
                   placeholder="Thêm mô tả chi tiết hơn..."
                   value={taskDesc}
                   onChange={e => setTaskDesc(e.target.value)}
-                  rows={5}
+                  rows={4}
                   className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-white"
                   style={{fontFamily: 'inherit'}}
                 />
@@ -88,40 +162,74 @@ const TaskModal = ({ task, onClose, onUpdate, onDelete }) => {
                   <span className="text-xl mr-2">🐱</span>
                   <h3 className="font-semibold text-gray-700 text-lg">GitHub Integration</h3>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="bg-white border border-blue-200 rounded-lg p-4" style={{backgroundColor: '#f0f9ff'}}>
                   <label className="block text-sm text-gray-600 mb-2">
-                    Link Pull Request / Issue
+                    Thêm link Pull Request / Issue / Commit
                   </label>
-                  <input 
-                    type="url"
-                    placeholder="https://github.com/user/repo/pull/123"
-                    value={githubUrl}
-                    onChange={e => setGithubUrl(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm"
-                  />
-                  {githubUrl && (
-                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2">
-                      <span className="text-green-600">✓</span>
-                      <span className="text-sm text-green-700">Đã link GitHub</span>
-                      <a 
-                        href={githubUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 text-sm underline ml-auto"
-                      >
-                        Xem →
-                      </a>
+                  <div style={{display: 'flex', gap: '8px'}}>
+                    <input 
+                      type="url"
+                      placeholder="https://github.com/user/repo/pull/123"
+                      value={newGhLink}
+                      onChange={e => setNewGhLink(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm"
+                    />
+                    <button 
+                      onClick={addGithubLink}
+                      className="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600"
+                    >
+                      + Thêm
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">Paste link rồi nhấn Enter hoặc bấm Thêm</p>
+                  
+                  {/* danh sách link đã thêm */}
+                  {ghLinks.length > 0 && (
+                    <div style={{marginTop: '12px'}}>
+                      <p className="text-sm font-medium text-gray-600 mb-2">Đã liên kết ({ghLinks.length}):</p>
+                      {ghLinks.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border mb-2" style={{borderColor: '#e5e7eb'}}>
+                          <div className="flex items-center gap-2" style={{minWidth: 0, flex: 1}}>
+                            <span>
+                              {item.type === 'pr' && '🔀'}
+                              {item.type === 'issue' && '🐛'}
+                              {item.type === 'commit' && '📝'}
+                              {item.type === 'link' && '🔗'}
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded font-medium" style={{backgroundColor: '#dcfce7', color: '#166534'}}>
+                              {item.type === 'pr' && 'PR'}
+                              {item.type === 'issue' && 'Issue'}
+                              {item.type === 'commit' && 'Commit'}
+                              {item.type === 'link' && 'Link'}
+                              {item.num && ` #${item.num}`}
+                            </span>
+                            <span className="text-xs text-gray-400 truncate" style={{maxWidth: '150px'}}>{item.url}</span>
+                          </div>
+                          <div className="flex items-center gap-2" style={{flexShrink: 0}}>
+                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-xs hover:underline">
+                              Xem →
+                            </a>
+                            <button onClick={() => removeLink(idx)} className="text-red-400 hover:text-red-600 text-sm">
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">
-                    Paste link GitHub PR hoặc Issue để liên kết với task này
-                  </p>
+                  
+                  {ghLinks.length === 0 && (
+                    <p className="text-sm text-gray-400 text-center py-3" style={{marginTop: '12px'}}>
+                      Chưa có link GitHub nào được liên kết
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Right side - Actions */}
-            <div style={{width: '200px'}}>
+            <div style={{width: '180px'}}>
                <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">THAO TÁC</h4>
                
                <button 

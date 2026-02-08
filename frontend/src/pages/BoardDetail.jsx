@@ -99,7 +99,7 @@ const BoardDetail = () => {
             await updateTask(id, updatedTask.cardId, updatedTask.id, {
                 title: updatedTask.title,
                 description: updatedTask.description,
-                githubPr: updatedTask.githubPr || ''
+                githubLinks: updatedTask.githubLinks || []
             });
 
             // Cập nhật State Local để giao diện tự đổi
